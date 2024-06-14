@@ -1,0 +1,8 @@
+train: D:\GitLab\Tracking Object\images
+val: D:\GitLab\Tracking Object\images
+test: D:\GitLab\Tracking Object\images
+
+names:
+  0: Đinh Quốc Cường
+  1: Phạm Thị Ánh
+  2: Trần Thanh Duy
