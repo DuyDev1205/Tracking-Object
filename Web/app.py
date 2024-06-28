@@ -1,7 +1,8 @@
-from flask import Flask, render_template, Response
+from flask import Flask,render_template,jsonify, Response
 from views import views
 import cv2
 import openpyxl
+import time
 from openpyxl.utils import get_column_letter, column_index_from_string
 app = Flask(__name__)
 data = []
@@ -14,7 +15,6 @@ def generate_frames():
         if not success:
             break
         else:
-            
             frame = cv2.flip(frame, 1)
             ret, buffer = cv2.imencode('.jpg', frame)
             frame = buffer.tobytes()
@@ -62,6 +62,7 @@ def nextpage():
     excel_data = read_excel_data('test.xlsx',count)
     date = getDate('test.xlsx',count)
     return render_template('index.html', excel_data=excel_data, date=date)
+
 @app.route('/prevpage')
 def prevpage():
     global count  # Khai báo rõ ràng là biến count là biến toàn cục
@@ -70,13 +71,34 @@ def prevpage():
     excel_data = read_excel_data('test.xlsx',count)
     date = getDate('test.xlsx',count)
     return render_template('index.html', excel_data=excel_data, date=date)
-@app.route('/editAttend')
-def editAttend():
+@app.route('/editAttend', methods=['POST'])
+def geteditAttend():
     global data
-    print(data)
     excel_data = read_excel_data('test.xlsx',count)
-    date = getDate('test.xlsx',count)
-    return render_template('index.html', excel_data=excel_data, date=date)
+
+    return jsonify(excel_data)
+
+def editAttend(name):
+    global data
+    modified_data = find_and_modify_name(name)
+    write_excel_data( modified_data)
+
+def write_excel_data(data):
+    global count
+    workbook = openpyxl.load_workbook("test.xlsx")
+    sheet = workbook.active
+    for row_index, row in enumerate(data, start=3):
+        for col_index, value in enumerate(row, start=count):
+            sheet.cell(row=row_index, column=col_index, value=value)
+    workbook.save("test.xlsx")
+
+def find_and_modify_name(name_to_find):
+    global data
+    for row in data:
+        if row[1] == name_to_find:
+            row[2] = 1
+            break  # Khi tìm thấy và thay đổi giá trị, thoát khỏi vòng lặp
+    return data
 
 if __name__ == '__main__':
     app.run(debug = True)
