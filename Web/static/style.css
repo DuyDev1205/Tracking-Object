@@ -32,6 +32,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
+    margin-right: 130px;
 }
 #toggleButton
 {
@@ -46,4 +48,9 @@ body {
     height: 480px;
     width: 640px;
     margin-top: 20px;
+}
+.table_title
+{
+    display: flex;
+    align-items: center;
 }

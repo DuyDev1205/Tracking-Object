@@ -2,8 +2,10 @@ from flask import Flask, render_template, Response
 from views import views
 import cv2
 import openpyxl
+from openpyxl.utils import get_column_letter, column_index_from_string
 app = Flask(__name__)
-
+data = []
+count = 1
 def generate_frames():
     camera = cv2.VideoCapture(0)  # Mở webcam
 
@@ -18,25 +20,63 @@ def generate_frames():
             frame = buffer.tobytes()
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-def read_excel_data(file_name):
+            
+
+def read_excel_data(file_name,index):
     workbook = openpyxl.load_workbook(file_name)
     sheet = workbook.active
-
+    global data
     data = []
-    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=1, max_col=4):
+    for row in sheet.iter_rows(min_row=3, max_row=sheet.max_row, min_col=index, max_col=index+2):
         row_data = [cell.value for cell in row]
         data.append(row_data)
-
     return data
+
+def getDate (file_name,index):
+    workbook = openpyxl.load_workbook(file_name)
+    sheet = workbook.active
+    new_column = get_column_letter(index)
+    # Lấy giá trị của một ô cụ thể (ví dụ: ô B3)
+    date = sheet[new_column+"1"].value
+    print (new_column+"1")
+    # Đóng tệp Excel
+    workbook.close()
+    return date
+
 @app.route('/')
 def index():
-    excel_data = read_excel_data('test.xlsx')
-    return render_template('index.html', excel_data=excel_data)
+    global count
+    excel_data = read_excel_data('test.xlsx',count)
+    date = getDate('test.xlsx',count)
+    return render_template('index.html', excel_data=excel_data, date=date)
 
 @app.route('/video_feed')
 def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/nextpage')
+def nextpage():
+    global count  # Khai báo rõ ràng là biến count là biến toàn cục
+    if count < 52:
+        count = count + 4
+    excel_data = read_excel_data('test.xlsx',count)
+    date = getDate('test.xlsx',count)
+    return render_template('index.html', excel_data=excel_data, date=date)
+@app.route('/prevpage')
+def prevpage():
+    global count  # Khai báo rõ ràng là biến count là biến toàn cục
+    if count > 2:
+        count = count - 4
+    excel_data = read_excel_data('test.xlsx',count)
+    date = getDate('test.xlsx',count)
+    return render_template('index.html', excel_data=excel_data, date=date)
+@app.route('/editAttend')
+def editAttend():
+    global data
+    print(data)
+    excel_data = read_excel_data('test.xlsx',count)
+    date = getDate('test.xlsx',count)
+    return render_template('index.html', excel_data=excel_data, date=date)
 
 if __name__ == '__main__':
     app.run(debug = True)
